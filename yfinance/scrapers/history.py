@@ -482,7 +482,22 @@ class PriceHistory:
 
         if rounding:
             df = np.round(df, data["chart"]["result"][0]["meta"]["priceHint"])
-        df['Volume'] = df['Volume'].fillna(0).astype(np.int64)
+
+        ###############################
+        #fix zero volume even when trades occurred
+        df = self.handle_false_zero_volume(df)
+        # false_zero_mask = (df['Volume'] == 0) & (df['High'] != df['Low'])
+        # zero_count = false_zero_mask.sum()
+        # zero_pct = (zero_count / len(df["Volume"])) * 100
+        # df.loc[false_zero_mask, "Volume"] = np.nan
+        
+        #only warn if any zeroes were false
+        # if zero_count > 0:
+        #     logging.warning(f"  False zero volume entries ({zero_pct:.2f}%) replaced with NaN")
+        
+        #df['Volume'] = df['Volume'].fillna(0).astype(np.int64)
+        # df['Volume'] = df['Volume'].astype("Int64")
+        ###############################
 
         if intraday:
             df.index.name = "Datetime"
@@ -511,6 +526,19 @@ class PriceHistory:
 
         if self._reconstruct_start_interval is not None and self._reconstruct_start_interval == interval:
             self._reconstruct_start_interval = None
+        return df
+
+    def handle_false_zero_volume(self, df) -> pd.DataFrame:
+        false_zero_mask = (df['Volume'] == 0) & (df['High'] != df['Low'])
+        zero_count = false_zero_mask.sum()
+        zero_pct = (zero_count / len(df["Volume"])) * 100
+        df.loc[false_zero_mask, "Volume"] = np.nan
+
+        #only warn if there were false zeros
+        if zero_count > 0:
+            logging.warning(f"  False zero volume entries ({zero_pct:.2f}%) replaced with NaN")
+
+        df['Volume'] = df['Volume'].astype("Int64")
         return df
 
     def _get_history_cache(self, period="max", interval="1d") -> pd.DataFrame:
