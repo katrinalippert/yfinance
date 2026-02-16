@@ -11,11 +11,13 @@ Specific test class:
 from datetime import datetime, timedelta
 
 import pandas as pd
+import numpy as np
 
 from tests.context import yfinance as yf
 from tests.context import session_gbl
 from yfinance.exceptions import YFPricesMissingError, YFInvalidPeriodError, YFNotImplementedError, YFTickerMissingError, YFTzMissingError, YFDataException
 from yfinance.config import YfConfig
+from yfinance.scrapers.history import PriceHistory
 
 import unittest
 # import requests_cache
@@ -287,6 +289,20 @@ class TestTickerHistory(unittest.TestCase):
         data = self.ticker.history("1y")
         self.assertIsInstance(data, pd.DataFrame, "data has wrong type")
         self.assertFalse(data.empty, "data is empty")
+
+    ##############ADDED ZERO VOLUME TEST
+    def test_handle_false_zero_volume(self):
+        test_data = pd.DataFrame({"Close": [10, 20, 30], 
+                                  "High": [25, 28, 32],
+                                  "Low": [8, 18, 19],
+                                  "Open": [18, 19, 20],
+                                  "Volume": [0, 150, 0]
+                                })
+        priceObj = PriceHistory(test_data, "N/A", None)
+        df_test = priceObj.handle_false_zero_volume(test_data)
+        self.assertTrue(pd.isna(df_test['Volume'][0]))
+        self.assertTrue(pd.isna(df_test['Volume'][2]))
+    #################################
 
     def test_download(self):
         tomorrow = pd.Timestamp.now().date() + pd.Timedelta(days=1)  # helps with caching
