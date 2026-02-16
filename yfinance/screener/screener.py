@@ -9,7 +9,8 @@ from ..utils import dynamic_docstring, generate_list_table_from_dict_universal
 
 from .query import EquityQuery as EqyQy
 from .query import FundQuery as FndQy
-from .query import QueryBase, EquityQuery, FundQuery
+from .query import ETFQuery as ETFQy
+from .query import QueryBase, EquityQuery, FundQuery, ETFQuery
 
 _SCREENER_URL_ = f"{_QUERY1_URL_}/v1/finance/screener"
 _PREDEFINED_URL_ = f"{_SCREENER_URL_}/predefined/saved"
@@ -51,8 +52,9 @@ PREDEFINED_SCREENER_QUERIES = {
                         "query": FndQy('and', [FndQy('gt', ['intradayprice', 15]), FndQy('is-in', ['performanceratingoverall', 4, 5]), FndQy('gt', ['initialinvestment', 1000]), FndQy('eq', ['exchange', 'NAS'])])}
 }
 
+
 @dynamic_docstring({"predefined_screeners": generate_list_table_from_dict_universal(PREDEFINED_SCREENER_QUERIES, bullets=True, title='Predefined queries (Dec-2024)')})
-def screen(query: Union[str, EquityQuery, FundQuery],
+def screen(query: Union[str, EquityQuery, FundQuery, ETFQuery], #ADDED accept etfquery objects
             offset: int = None, 
             size: int = None,
             count: int = None,
@@ -65,7 +67,7 @@ def screen(query: Union[str, EquityQuery, FundQuery],
     Run a screen: predefined query, or custom query.
 
     :Parameters:
-        * Defaults only apply if query = EquityQuery or FundQuery
+        * Defaults only apply if query = EquityQuery, FundQuery, or ETFQuery
         query : str | Query:
             The query to execute, either name of predefined or custom query.
             For predefined list run yf.PREDEFINED_SCREENER_QUERIES.keys()
@@ -150,7 +152,10 @@ def screen(query: Union[str, EquityQuery, FundQuery],
 
     post_query = None
     if isinstance(query, str):
-        # post_query = PREDEFINED_SCREENER_QUERIES[query]
+        try:
+            post_query = PREDEFINED_SCREENER_QUERIES[query]
+        except KeyError:
+            print(f"{query} not a predefined query.")
         # Switch to Yahoo's predefined endpoint
 
         if size is not None:
@@ -194,6 +199,8 @@ def screen(query: Union[str, EquityQuery, FundQuery],
         post_query['quoteType'] = 'EQUITY'
     elif isinstance(post_query['query'], FndQy):
         post_query['quoteType'] = 'MUTUALFUND'
+    elif isinstance(post_query['query'], ETFQy):   #ADDED quoteype = etf
+        post_query['quoteType'] = 'ETF'
     post_query['query'] = post_query['query'].to_dict()
     data = dumps(post_query, separators=(",", ":"), ensure_ascii=False)
 

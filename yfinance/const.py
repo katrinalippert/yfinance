@@ -579,6 +579,13 @@ FUND_SCREENER_EQ_MAP = {
         'us': {'NAS'}
     }
 }
+#####
+ETF_SCREENER_EQ_MAP = {
+    "exchange": {
+    'NGM', 
+    'NYQ'
+    },
+}
 COMMON_SCREENER_FIELDS = {
     "price":{
         "eodprice",
@@ -597,6 +604,29 @@ FUND_SCREENER_FIELDS = {
         "riskratingoverall"}
 }
 FUND_SCREENER_FIELDS = merge_two_level_dicts(FUND_SCREENER_FIELDS, COMMON_SCREENER_FIELDS)
+
+#ETF SCREEN
+ETF_SCREENER_FIELDS = {
+     "eq_fields": {
+        "categoryname",
+        "performanceratingoverall",
+        "initialinvestment", 
+        "annualreturnnavy1categoryrank", 
+        "annualreportgrossexpenseratio",
+        "annualreportnetexpenseratio",
+        "riskratingoverall",
+        "fundfamilyname",
+        "primary_sector",
+        "trailing_ytd_return",
+        "annualreturnnavy5"
+        }
+    
+}
+#FUND_SCREENER_FIELDS already contains COMMON_FIELDS when these dicts are merged 
+ETF_SCREENER_FIELDS = merge_two_level_dicts(ETF_SCREENER_FIELDS, FUND_SCREENER_FIELDS)
+###########
+
+
 EQUITY_SCREENER_FIELDS = {
     "eq_fields": {
         "region",
